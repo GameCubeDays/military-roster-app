@@ -371,7 +371,7 @@
                                                     const name = record.fields.Name || record.fields.Username || 'Unknown';
                                                     const currentRank = record.fields.Rank || 'N/A';
                                                     const steamID = record.fields.SteamID || '-';
-                                                    const lastPromoted = record.fields['Last Promoted Date'] ? new Date(record.fields['Last Promoted Date']).toLocaleDateString() : '-';
+                                                    const lastPromoted = record.fields['Last Promoted'] ? new Date(record.fields['Last Promoted Date']).toLocaleDateString() : '-';
                                                     const currentIndex = RANKS.indexOf(currentRank);
                                                     const isEditing = editingRecord === record.id;
                                                     
