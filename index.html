@@ -39,7 +39,7 @@
             const[user,setU]=useState('');
             const[pass,setP]=useState('');
             const[cu,setCu]=useState(null);
-            const[config,setConfig]=useState({baseId:'apppTIfE6NtJusdjj',rosterTableName:'Roster',usersTableName:'Users',apiToken:''});
+            const[config,setConfig]=useState({baseId:'apppTIfE6NtJusdjj',rosterTableName:'Roster',usersTableName:'Users',apiToken:'patx3cXCgUiEupXMd.5b835c7960164ef1d02a9357c33a90eece3509f1e03f496338bfd0bac480e853'});
             const[roster,setRoster]=useState([]);
             const[load,setLoad]=useState(false);
             const[err,setErr]=useState('');
@@ -47,7 +47,7 @@
             const[edit,setEdit]=useState(null);
             const[form,setForm]=useState({});
             const save=()=>{if(!config.baseId||!config.apiToken){setErr('Fill in Base ID and Token');return;}localStorage.setItem('cfg',JSON.stringify(config));setCfg(true);setErr('');fetchRoster();};
-            const loadCfg=()=>{const s=localStorage.getItem('cfg');if(s){setConfig(JSON.parse(s));setCfg(true);return true;}return false;};
+            const loadCfg=()=>{const s=localStorage.getItem('cfg');if(s){setConfig(JSON.parse(s));setCfg(true);return true;}setCfg(true);return true;};
             const idx=r=>RANKS.indexOf(r);
             const canP=r=>idx(r)>=idx('WO');
             const canD=r=>idx(r)>=idx('MAJ');
