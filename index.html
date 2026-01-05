@@ -661,3 +661,29 @@
                                                 })}
                                             </tbody>
                                         </table>
+                                        </div>
+                            )}
+                        </div>
+                    </div>
+
+                    <div className="mt-6 text-center">
+                        <button
+                            onClick={() => {
+                                setIsAuthenticated(false);
+                                setCurrentUser(null);
+                                setUsername('');
+                                setPassword('');
+                            }}
+                            className="text-slate-400 hover:text-white text-sm transition"
+                        >
+                            Logout
+                        </button>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
+    const root = ReactDOM.createRoot(document.getElementById('app'));
+    root.render(<RosterApp />);
+</script>
