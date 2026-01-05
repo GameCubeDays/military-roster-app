@@ -59,7 +59,7 @@
         
         const SheetViewer=({gid,title})=>{
             const embedUrl=`https://docs.google.com/spreadsheets/d/${SHEET_ID}/edit?gid=${gid}&rm=minimal&widget=true`;
-            return <div className="w-full" style={{height:'600px'}}><iframe src={embedUrl} className="w-full h-full border-0 rounded" title={title}></iframe></div>;
+            return <div className="w-full h-screen"><iframe src={embedUrl} className="w-full h-full border-0 rounded" title={title}></iframe></div>;
         };
         
         function App(){
