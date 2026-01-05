@@ -50,7 +50,7 @@
         );
 
         const Lock = () => (
-            <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
                 <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
             </svg>
@@ -85,9 +85,26 @@
             </svg>
         );
 
+        const LogIn = () => (
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"></path>
+                <polyline points="10 17 15 12 10 7"></polyline>
+                <line x1="15" y1="12" x2="3" y2="12"></line>
+            </svg>
+        );
+
+        const LogOut = () => (
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                <polyline points="16 17 21 12 16 7"></polyline>
+                <line x1="21" y1="12" x2="9" y2="12"></line>
+            </svg>
+        );
+
         function RosterApp() {
             const [isConfigured, setIsConfigured] = useState(false);
             const [isAuthenticated, setIsAuthenticated] = useState(false);
+            const [showLoginModal, setShowLoginModal] = useState(false);
             const [username, setUsername] = useState('');
             const [password, setPassword] = useState('');
             const [currentUser, setCurrentUser] = useState(null);
@@ -112,6 +129,7 @@
                 localStorage.setItem('rosterConfig', JSON.stringify(config));
                 setIsConfigured(true);
                 setError('');
+                fetchRoster();
             };
 
             const loadConfig = () => {
@@ -119,7 +137,9 @@
                 if (saved) {
                     setConfig(JSON.parse(saved));
                     setIsConfigured(true);
+                    return true;
                 }
+                return false;
             };
 
             const getRankIndex = (rank) => RANKS.indexOf(rank);
@@ -173,7 +193,9 @@
                         setIsAuthenticated(true);
                         setUsername('');
                         setPassword('');
-                        fetchRoster();
+                        setShowLoginModal(false);
+                        setSuccess('Login successful!');
+                        setTimeout(() => setSuccess(''), 3000);
                     } else {
                         setError('Invalid username or password');
                     }
@@ -211,7 +233,18 @@
                 }
             };
 
+            const requireAuth = (action) => {
+                if (!isAuthenticated) {
+                    setShowLoginModal(true);
+                    setError('Please login to perform this action');
+                    return false;
+                }
+                return true;
+            };
+
             const promoteUser = async (recordId, currentRank, name) => {
+                if (!requireAuth()) return;
+                
                 if (!canPromote(currentUser.rank)) {
                     setError('You do not have permission to promote');
                     return;
@@ -234,6 +267,8 @@
             };
 
             const demoteUser = async (recordId, currentRank, name) => {
+                if (!requireAuth()) return;
+                
                 if (!canDemote(currentUser.rank)) {
                     setError('You do not have permission to demote (requires MAJ+)');
                     return;
@@ -271,8 +306,7 @@
                             },
                             body: JSON.stringify({
                                 fields: {
-                                    'Rank': newRank,
-                                    'Promote': false
+                                    'Rank': newRank
                                 }
                             })
                         }
@@ -293,6 +327,8 @@
             };
 
             const startEdit = (record) => {
+                if (!requireAuth()) return;
+                
                 if (!canEdit(currentUser.rank)) {
                     setError('You do not have permission to edit records (requires MAJ+)');
                     return;
@@ -343,7 +379,10 @@
             };
 
             useEffect(() => {
-                loadConfig();
+                const configured = loadConfig();
+                if (configured) {
+                    fetchRoster();
+                }
             }, []);
 
             if (!isConfigured) {
@@ -426,112 +465,141 @@
                 );
             }
 
-            if (!isAuthenticated) {
-                return (
-                    <div className="min-h-screen bg-slate-900 text-white flex items-center justify-center p-4">
-                        <div className="bg-slate-800 rounded-lg p-8 shadow-xl border border-slate-700 w-full max-w-md">
-                            <div className="flex justify-center mb-6 text-blue-500">
-                                <Lock />
-                            </div>
-                            <h1 className="text-2xl font-bold mb-6 text-center">Login to Roster</h1>
-                            
-                            <div className="space-y-4">
-                                <input
-                                    type="text"
-                                    placeholder="Username"
-                                    value={username}
-                                    onChange={(e) => setUsername(e.target.value)}
-                                    className="w-full px-4 py-3 bg-slate-700 rounded border border-slate-600 focus:border-blue-500 focus:outline-none text-white"
-                                />
-
-                                <input
-                                    type="password"
-                                    placeholder="Password"
-                                    value={password}
-                                    onChange={(e) => setPassword(e.target.value)}
-                                    onKeyPress={(e) => e.key === 'Enter' && handleLogin()}
-                                    className="w-full px-4 py-3 bg-slate-700 rounded border border-slate-600 focus:border-blue-500 focus:outline-none text-white"
-                                />
-
-                                {error && (
-                                    <div className="bg-red-900/50 border border-red-700 rounded p-3 text-sm flex items-start gap-2">
-                                        <AlertCircle className="flex-shrink-0 mt-0.5" />
-                                        <span>{error}</span>
-                                    </div>
-                                )}
-
-                                <button
-                                    onClick={handleLogin}
-                                    disabled={loading}
-                                    className="w-full bg-blue-600 hover:bg-blue-700 py-3 rounded font-medium transition disabled:opacity-50"
-                                >
-                                    {loading ? 'Logging in...' : 'Login'}
-                                </button>
-
-                                <button
-                                    onClick={() => {
-                                        localStorage.removeItem('rosterConfig');
-                                        setIsConfigured(false);
-                                    }}
-                                    className="w-full text-slate-400 hover:text-white text-sm transition"
-                                >
-                                    Reconfigure Settings
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                );
-            }
-
-            const userCanPromote = canPromote(currentUser.rank);
-            const userCanDemote = canDemote(currentUser.rank);
-            const userCanEdit = canEdit(currentUser.rank);
+            const userCanPromote = isAuthenticated && canPromote(currentUser.rank);
+            const userCanDemote = isAuthenticated && canDemote(currentUser.rank);
+            const userCanEdit = isAuthenticated && canEdit(currentUser.rank);
 
             return (
                 <div className="min-h-screen bg-slate-900 text-white p-4 md:p-8">
+                    {/* Login Modal */}
+                    {showLoginModal && (
+                        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+                            <div className="bg-slate-800 rounded-lg p-8 shadow-xl border border-slate-700 w-full max-w-md">
+                                <div className="flex justify-center mb-6 text-blue-500">
+                                    <Lock />
+                                </div>
+                                <h2 className="text-2xl font-bold mb-6 text-center">Login Required</h2>
+                                
+                                <div className="space-y-4">
+                                    <input
+                                        type="text"
+                                        placeholder="Username"
+                                        value={username}
+                                        onChange={(e) => setUsername(e.target.value)}
+                                        className="w-full px-4 py-3 bg-slate-700 rounded border border-slate-600 focus:border-blue-500 focus:outline-none text-white"
+                                    />
+
+                                    <input
+                                        type="password"
+                                        placeholder="Password"
+                                        value={password}
+                                        onChange={(e) => setPassword(e.target.value)}
+                                        onKeyPress={(e) => e.key === 'Enter' && handleLogin()}
+                                        className="w-full px-4 py-3 bg-slate-700 rounded border border-slate-600 focus:border-blue-500 focus:outline-none text-white"
+                                    />
+
+                                    {error && (
+                                        <div className="bg-red-900/50 border border-red-700 rounded p-3 text-sm flex items-start gap-2">
+                                            <AlertCircle className="flex-shrink-0 mt-0.5" />
+                                            <span>{error}</span>
+                                        </div>
+                                    )}
+
+                                    <button
+                                        onClick={handleLogin}
+                                        disabled={loading}
+                                        className="w-full bg-blue-600 hover:bg-blue-700 py-3 rounded font-medium transition disabled:opacity-50"
+                                    >
+                                        {loading ? 'Logging in...' : 'Login'}
+                                    </button>
+
+                                    <button
+                                        onClick={() => {
+                                            setShowLoginModal(false);
+                                            setError('');
+                                            setUsername('');
+                                            setPassword('');
+                                        }}
+                                        className="w-full text-slate-400 hover:text-white text-sm transition"
+                                    >
+                                        Cancel
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
                     <div className="max-w-7xl mx-auto">
                         <div className="bg-slate-800 rounded-lg shadow-xl border border-slate-700">
                             <div className="p-6 border-b border-slate-700 flex items-center justify-between flex-wrap gap-4">
                                 <div>
                                     <h1 className="text-3xl font-bold">🎖️ Military Roster</h1>
-                                    <p className="text-sm text-slate-400 mt-1">
-                                        Logged in as <span className="text-blue-400 font-medium">{currentUser.name}</span> ({currentUser.rank})
-                                    </p>
+                                    {isAuthenticated && (
+                                        <p className="text-sm text-slate-400 mt-1">
+                                            Logged in as <span className="text-blue-400 font-medium">{currentUser.name}</span> ({currentUser.rank})
+                                        </p>
+                                    )}
                                 </div>
-                                <button
-                                    onClick={fetchRoster}
-                                    disabled={loading}
-                                    className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded transition disabled:opacity-50"
-                                >
-                                    <RefreshCw className={loading ? 'animate-spin' : ''} />
-                                    Refresh
-                                </button>
+                                <div className="flex items-center gap-2">
+                                    <button
+                                        onClick={fetchRoster}
+                                        disabled={loading}
+                                        className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded transition disabled:opacity-50"
+                                    >
+                                        <RefreshCw className={loading ? 'animate-spin' : ''} />
+                                        Refresh
+                                    </button>
+                                    {isAuthenticated ? (
+                                        <button
+                                            onClick={() => {
+                                                setIsAuthenticated(false);
+                                                setCurrentUser(null);
+                                                setSuccess('Logged out successfully');
+                                                setTimeout(() => setSuccess(''), 3000);
+                                            }}
+                                            className="flex items-center gap-2 bg-slate-600 hover:bg-slate-700 px-4 py-2 rounded transition"
+                                        >
+                                            <LogOut />
+                                            Logout
+                                        </button>
+                                    ) : (
+                                        <button
+                                            onClick={() => setShowLoginModal(true)}
+                                            className="flex items-center gap-2 bg-green-600 hover:bg-green-700 px-4 py-2 rounded transition"
+                                        >
+                                            <LogIn />
+                                            Login
+                                        </button>
+                                    )}
+                                </div>
                             </div>
 
-                            <div className="p-6 border-b border-slate-700 bg-slate-750">
-                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
-                                    <div className="flex items-center gap-2">
-                                        <span className={userCanPromote ? 'text-green-400' : 'text-slate-500'}>
-                                            {userCanPromote ? '✓' : '✗'}
-                                        </span>
-                                        <span>Can Promote (WO+)</span>
-                                    </div>
-                                    <div className="flex items-center gap-2">
-                                        <span className={userCanDemote ? 'text-green-400' : 'text-slate-500'}>
-                                            {userCanDemote ? '✓' : '✗'}
-                                        </span>
-                                        <span>Can Demote (MAJ+)</span>
-                                    </div>
-                                    <div className="flex items-center gap-2">
-                                        <span className={userCanEdit ? 'text-green-400' : 'text-slate-500'}>
-                                            {userCanEdit ? '✓' : '✗'}
-                                        </span>
-                                        <span>Can Edit Records (MAJ+)</span>
+                            {isAuthenticated && (
+                                <div className="p-6 border-b border-slate-700 bg-slate-750">
+                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                                        <div className="flex items-center gap-2">
+                                            <span className={userCanPromote ? 'text-green-400' : 'text-slate-500'}>
+                                                {userCanPromote ? '✓' : '✗'}
+                                            </span>
+                                            <span>Can Promote (WO+)</span>
+                                        </div>
+                                        <div className="flex items-center gap-2">
+                                            <span className={userCanDemote ? 'text-green-400' : 'text-slate-500'}>
+                                                {userCanDemote ? '✓' : '✗'}
+                                            </span>
+                                            <span>Can Demote (MAJ+)</span>
+                                        </div>
+                                        <div className="flex items-center gap-2">
+                                            <span className={userCanEdit ? 'text-green-400' : 'text-slate-500'}>
+                                                {userCanEdit ? '✓' : '✗'}
+                                            </span>
+                                            <span>Can Edit Records (MAJ+)</span>
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
+                            )}
 
-                            {error && (
+                            {error && !showLoginModal && (
                                 <div className="m-6 bg-red-900/50 border border-red-700 rounded p-4 flex items-start gap-2">
                                     <AlertCircle className="flex-shrink-0 mt-0.5" />
                                     <span>{error}</span>
@@ -563,7 +631,7 @@
                                                     <th className="text-left py-3 px-4">Rank</th>
                                                     <th className="text-left py-3 px-4">SteamID</th>
                                                     <th className="text-left py-3 px-4">Last Promoted</th>
-                                                    <th className="text-center py-3 px-4">Actions</th>
+                                                    {isAuthenticated && <th className="text-center py-3 px-4">Actions</th>}
                                                 </tr>
                                             </thead>
                                             <tbody>
@@ -588,126 +656,3 @@
                                                                         className="bg-slate-700 px-2 py-1 rounded border border-slate-600 w-full text-white"
                                                                     />
                                                                 ) : name}
-                                                            </td>
-                                                            <td className="py-3 px-4">
-                                                                {isEditing ? (
-                                                                    <select
-                                                                        value={editForm.Rank}
-                                                                        onChange={(e) => setEditForm({...editForm, Rank: e.target.value})}
-                                                                        className="bg-slate-700 px-2 py-1 rounded border border-slate-600 text-white"
-                                                                    >
-                                                                        {RANKS.map(rank => (
-                                                                            <option key={rank} value={rank}>{rank}</option>
-                                                                        ))}
-                                                                    </select>
-                                                                ) : (
-                                                                    <span className="bg-blue-900/50 text-blue-300 px-3 py-1 rounded text-sm font-mono">
-                                                                        {currentRank}
-                                                                    </span>
-                                                                )}
-                                                            </td>
-                                                            <td className="py-3 px-4 text-slate-300">
-                                                                {isEditing ? (
-                                                                    <input
-                                                                        type="text"
-                                                                        value={editForm.SteamID || ''}
-                                                                        onChange={(e) => setEditForm({...editForm, SteamID: e.target.value})}
-                                                                        className="bg-slate-700 px-2 py-1 rounded border border-slate-600 w-full text-white"
-                                                                        placeholder="SteamID"
-                                                                    />
-                                                                ) : (
-                                                                    <span className="font-mono text-sm">{steamID}</span>
-                                                                )}
-                                                            </td>
-                                                            <td className="py-3 px-4 text-slate-400 text-sm">
-                                                                {lastPromoted}
-                                                            </td>
-                                                            <td className="py-3 px-4">
-                                                                <div className="flex items-center justify-center gap-2 flex-wrap">
-                                                                    {isEditing ? (
-                                                                        <>
-                                                                            <button
-                                                                                onClick={() => saveEdit(record.id)}
-                                                                                disabled={loading}
-                                                                                className="bg-green-600 hover:bg-green-700 px-3 py-1 rounded inline-flex items-center gap-1 transition disabled:opacity-50"
-                                                                            >
-                                                                                <Save />
-                                                                                Save
-                                                                            </button>
-                                                                            <button
-                                                                                onClick={cancelEdit}
-                                                                                className="bg-slate-600 hover:bg-slate-700 px-3 py-1 rounded inline-flex items-center gap-1 transition"
-                                                                            >
-                                                                                <X />
-                                                                                Cancel
-                                                                            </button>
-                                                                        </>
-                                                                    ) : (
-                                                                        <>
-                                                                            {userCanPromote && currentIndex < RANKS.length - 1 && (
-                                                                                <button
-                                                                                    onClick={() => promoteUser(record.id, currentRank, name)}
-                                                                                    disabled={loading}
-                                                                                    className="bg-green-600 hover:bg-green-700 px-3 py-1 rounded inline-flex items-center gap-1 transition disabled:opacity-50"
-                                                                                >
-                                                                                    <ChevronUp />
-                                                                                    Promote
-                                                                                </button>
-                                                                            )}
-                                                                            {userCanDemote && currentIndex > 0 && (
-                                                                                <button
-                                                                                    onClick={() => demoteUser(record.id, currentRank, name)}
-                                                                                    disabled={loading}
-                                                                                    className="bg-orange-600 hover:bg-orange-700 px-3 py-1 rounded inline-flex items-center gap-1 transition disabled:opacity-50"
-                                                                                >
-                                                                                    <ChevronDown />
-                                                                                    Demote
-                                                                                </button>
-                                                                            )}
-                                                                            {userCanEdit && (
-                                                                                <button
-                                                                                    onClick={() => startEdit(record)}
-                                                                                    disabled={loading}
-                                                                                    className="bg-blue-600 hover:bg-blue-700 px-3 py-1 rounded inline-flex items-center gap-1 transition disabled:opacity-50"
-                                                                                >
-                                                                                    <Edit2 />
-                                                                                    Edit
-                                                                                </button>
-                                                                            )}
-                                                                        </>
-                                                                    )}
-                                                                </div>
-                                                            </td>
-                                                        </tr>
-                                                    );
-                                                })}
-                                            </tbody>
-                                        </table>
-                                    </div>
-                                )}
-                            </div>
-                        </div>
-
-                        <div className="mt-6 text-center">
-                            <button
-                                onClick={() => {
-                                    setIsAuthenticated(false);
-                                    setCurrentUser(null);
-                                    setUsername('');
-                                    setPassword('');
-                                }}
-                                className="text-slate-400 hover:text-white text-sm transition"
-                            >
-                                Logout
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            );
-        }
-
-        const root = ReactDOM.createRoot(document.getElementById('app'));
-        root.render(<RosterApp />);
-    </script>
-</body>
-</html>
