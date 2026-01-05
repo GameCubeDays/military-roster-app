@@ -561,6 +561,8 @@
                                                 <tr className="border-b border-slate-700">
                                                     <th className="text-left py-3 px-4">Name</th>
                                                     <th className="text-left py-3 px-4">Rank</th>
+                                                    <th className="text-left py-3 px-4">SteamID</th>
+                                                    <th className="text-left py-3 px-4">Last Promoted</th>
                                                     <th className="text-center py-3 px-4">Actions</th>
                                                 </tr>
                                             </thead>
@@ -568,6 +570,10 @@
                                                 {roster.map((record) => {
                                                     const name = record.fields.Name || record.fields.Username || 'Unknown';
                                                     const currentRank = record.fields.Rank || 'N/A';
+                                                    const steamID = record.fields.SteamID || '-';
+                                                    const lastPromoted = record.fields['Last Promoted Date'] 
+                                                        ? new Date(record.fields['Last Promoted Date']).toLocaleDateString()
+                                                        : '-';
                                                     const currentIndex = RANKS.indexOf(currentRank);
                                                     const isEditing = editingRecord === record.id;
                                                     
@@ -599,6 +605,22 @@
                                                                         {currentRank}
                                                                     </span>
                                                                 )}
+                                                            </td>
+                                                            <td className="py-3 px-4 text-slate-300">
+                                                                {isEditing ? (
+                                                                    <input
+                                                                        type="text"
+                                                                        value={editForm.SteamID || ''}
+                                                                        onChange={(e) => setEditForm({...editForm, SteamID: e.target.value})}
+                                                                        className="bg-slate-700 px-2 py-1 rounded border border-slate-600 w-full text-white"
+                                                                        placeholder="SteamID"
+                                                                    />
+                                                                ) : (
+                                                                    <span className="font-mono text-sm">{steamID}</span>
+                                                                )}
+                                                            </td>
+                                                            <td className="py-3 px-4 text-slate-400 text-sm">
+                                                                {lastPromoted}
                                                             </td>
                                                             <td className="py-3 px-4">
                                                                 <div className="flex items-center justify-center gap-2 flex-wrap">
@@ -661,29 +683,31 @@
                                                 })}
                                             </tbody>
                                         </table>
-                                        </div>
-                            )}
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+
+                        <div className="mt-6 text-center">
+                            <button
+                                onClick={() => {
+                                    setIsAuthenticated(false);
+                                    setCurrentUser(null);
+                                    setUsername('');
+                                    setPassword('');
+                                }}
+                                className="text-slate-400 hover:text-white text-sm transition"
+                            >
+                                Logout
+                            </button>
                         </div>
                     </div>
-
-                    <div className="mt-6 text-center">
-                        <button
-                            onClick={() => {
-                                setIsAuthenticated(false);
-                                setCurrentUser(null);
-                                setUsername('');
-                                setPassword('');
-                            }}
-                            className="text-slate-400 hover:text-white text-sm transition"
-                        >
-                            Logout
-                        </button>
-                    </div>
                 </div>
-            </div>
-        );
-    }
+            );
+        }
 
-    const root = ReactDOM.createRoot(document.getElementById('app'));
-    root.render(<RosterApp />);
-</script>
+        const root = ReactDOM.createRoot(document.getElementById('app'));
+        root.render(<RosterApp />);
+    </script>
+</body>
+</html>
